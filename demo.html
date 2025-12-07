@@ -14,14 +14,48 @@
 </head>
 
 <body>
+    <!-- TensorFlow.js for Person Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
     <!-- Scan Lines Overlay -->
     <div class="scanlines"></div>
 
     <!-- App Container -->
     <div class="app-container" id="app">
 
-        <!-- Screen 1: Detection Mode -->
-        <div class="screen active" id="screen-detection">
+        <!-- Screen 0: Camera Passthrough with Real Detection -->
+        <div class="screen active" id="screen-camera">
+            <div class="detection-header">
+                <div class="header-left">
+                    <span class="logo">🤖 OnlyBots</span>
+                    <span class="status-badge" id="cameraStatus"><span class="pulse"></span> INITIALIZING...</span>
+                </div>
+                <div class="header-right">
+                    <span class="detection-count" id="cameraDetectionCount">0 people detected</span>
+                </div>
+            </div>
+
+            <div class="camera-container">
+                <video id="webcam" autoplay playsinline muted></video>
+                <canvas id="detectionCanvas"></canvas>
+                <div class="camera-overlay" id="cameraOverlay">
+                    <div class="loading-camera">
+                        <div class="spinner"></div>
+                        <p id="loadingText">Loading AI Model...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detection-footer camera-footer">
+                <p id="cameraInstructions">📷 Point your camera at people to detect them</p>
+                <button class="btn btn-primary" id="btnSelectPerson" disabled>Select Detected Person</button>
+                <button class="btn btn-secondary" id="btnSkipCamera">Skip to Demo Mode</button>
+            </div>
+        </div>
+
+        <!-- Screen 1: Detection Mode (Fallback/Demo) -->
+        <div class="screen" id="screen-detection">
             <div class="detection-header">
                 <div class="header-left">
                     <span class="logo">🤖 OnlyBots</span>

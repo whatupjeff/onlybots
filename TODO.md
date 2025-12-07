@@ -11,12 +11,35 @@ Building an interactive web demo/prototype that simulates the OnlyBots MR experi
 - [x] **Landing Page** - Modern dark mode professional landing page
 - [x] **Link to Demo** - Added navigation to demo from landing page
 
+### Phase 0.5: Camera Passthrough (NEW!)
+- [x] **0.5.1 Live Camera Feed**
+  - Webcam access via getUserMedia
+  - Full-screen video with mirror effect
+  - Simulates Meta Quest passthrough mode
+
+- [x] **0.5.2 AI Person Detection**
+  - TensorFlow.js with COCO-SSD model
+  - Real-time person detection (~60fps)
+  - Draws bounding boxes around detected people
+  - Corner accent styling for MR look
+
+- [x] **0.5.3 Detection UI Overlay**
+  - Person name labels on each detection
+  - Confidence score bar visualization
+  - Distance estimation from bounding box size
+  - Live detection counter
+
+- [x] **0.5.4 Selection Integration**
+  - "Select Detected Person" button
+  - Auto-enable when people detected
+  - Falls back to demo mode if camera unavailable
+
 ### Phase 1: App Demo Structure
 - [x] **1.1 Create Demo App Page** (`demo.html`)
   - Separate page for the interactive demo experience
   - Full-screen immersive dark UI with scanlines effect
 
-### Phase 2: Person Detection & Selection (Simulated)
+### Phase 2: Person Detection & Selection (Simulated Fallback)
 - [x] **2.1 Passthrough Simulation**
   - Created simulated "camera view" environment with grid background
   - Show sample people/avatars that can be detected (3 targets)
@@ -82,7 +105,7 @@ Building an interactive web demo/prototype that simulates the OnlyBots MR experi
 ├── script.js           # Landing page scripts ✅
 ├── demo.html           # Interactive demo app ✅
 ├── demo.css            # Demo app styles ✅
-├── demo.js             # Demo app logic & state machine ✅
+├── demo.js             # Demo app logic with AI detection ✅
 ├── Instructions.md     # PRD ✅
 └── TODO.md             # This file ✅
 ```
@@ -97,4 +120,12 @@ Building an interactive web demo/prototype that simulates the OnlyBots MR experi
 
 ---
 
-## ✨ Current Status: ALL CORE FEATURES COMPLETE!
+## ✨ Current Status: ALL CORE FEATURES COMPLETE + CAMERA DETECTION!
+
+### New Feature: Real Camera Passthrough
+The demo now includes **real webcam passthrough** with **AI-powered person detection**:
+- Uses TensorFlow.js COCO-SSD model
+- Draws bounding boxes in real-time
+- Shows person labels with name and distance
+- Seamlessly integrates with subscription flow
+- Falls back to demo mode if camera unavailable

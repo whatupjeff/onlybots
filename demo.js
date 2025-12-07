@@ -26,35 +26,94 @@ class CameraDetection {
 
     async init() {
         try {
+            // Check if we're on HTTPS (required for camera on Quest)
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                console.warn('Camera requires HTTPS. Current protocol:', location.protocol);
+            }
+
             this.loadingText.textContent = 'Loading AI Model...';
 
             // Load COCO-SSD model
             this.model = await cocoSsd.load();
             this.loadingText.textContent = 'Accessing Camera...';
 
-            // Get webcam access
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: 'user',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+            // Try multiple camera configurations for Quest compatibility
+            const cameraConfigs = [
+                // Config 1: Environment-facing camera (for Quest passthrough-like experience)
+                {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
                 },
-                audio: false
-            });
+                // Config 2: User-facing camera
+                {
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                },
+                // Config 3: Any camera with lower resolution
+                {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                },
+                // Config 4: Just request any video
+                {
+                    video: true,
+                    audio: false
+                }
+            ];
+
+            let stream = null;
+            let lastError = null;
+
+            // Try each configuration until one works
+            for (const config of cameraConfigs) {
+                try {
+                    console.log('Trying camera config:', JSON.stringify(config));
+                    stream = await navigator.mediaDevices.getUserMedia(config);
+                    console.log('Camera access successful with config:', JSON.stringify(config));
+                    break;
+                } catch (err) {
+                    console.warn('Camera config failed:', err.name, err.message);
+                    lastError = err;
+                }
+            }
+
+            if (!stream) {
+                throw lastError || new Error('No camera available');
+            }
 
             this.video.srcObject = stream;
 
             // Wait for video to be ready
-            await new Promise((resolve) => {
+            await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Video load timeout'));
+                }, 10000);
+
                 this.video.onloadedmetadata = () => {
-                    this.video.play();
-                    resolve();
+                    clearTimeout(timeout);
+                    this.video.play().then(resolve).catch(reject);
+                };
+
+                this.video.onerror = () => {
+                    clearTimeout(timeout);
+                    reject(new Error('Video element error'));
                 };
             });
 
             // Set canvas size to match video
-            this.canvas.width = this.video.videoWidth;
-            this.canvas.height = this.video.videoHeight;
+            this.canvas.width = this.video.videoWidth || 640;
+            this.canvas.height = this.video.videoHeight || 480;
 
             // Hide overlay
             this.overlay.classList.add('hidden');
@@ -74,10 +133,33 @@ class CameraDetection {
 
     showError(error) {
         let message = 'Could not access camera';
+        let suggestion = '';
+
+        // Detect if on Quest/VR browser
+        const isQuest = /OculusBrowser|Meta Quest/i.test(navigator.userAgent);
+
         if (error.name === 'NotAllowedError') {
-            message = 'Camera access denied. Please allow camera permissions.';
-        } else if (error.name === 'NotFoundError') {
-            message = 'No camera found on this device.';
+            message = 'Camera access denied.';
+            suggestion = 'Please allow camera permissions in your browser settings.';
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+            message = 'No camera found.';
+            if (isQuest) {
+                suggestion = 'Note: Quest passthrough cameras may not be accessible via browser. Try the demo mode instead!';
+            } else {
+                suggestion = 'Please connect a camera and try again.';
+            }
+        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+            message = 'Camera is in use by another app.';
+            suggestion = 'Please close other apps using the camera.';
+        } else if (error.name === 'OverconstrainedError') {
+            message = 'Camera does not support requested settings.';
+            suggestion = 'Trying with basic settings...';
+        } else if (error.name === 'SecurityError' || error.message?.includes('secure')) {
+            message = 'HTTPS required for camera access.';
+            suggestion = 'Please access this page via HTTPS.';
+        } else if (isQuest) {
+            message = 'Camera not available on Quest browser.';
+            suggestion = 'Quest passthrough requires a native app. Use Demo Mode to experience the app!';
         }
 
         this.overlay.innerHTML = `
@@ -85,6 +167,7 @@ class CameraDetection {
                 <div class="error-icon">📷❌</div>
                 <h3>Camera Error</h3>
                 <p>${message}</p>
+                ${suggestion ? `<p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">${suggestion}</p>` : ''}
                 <button class="btn btn-secondary" onclick="window.onlyBotsDemo.skipToDemo()">
                     Continue to Demo Mode
                 </button>

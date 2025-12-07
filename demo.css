@@ -831,6 +831,11 @@ body {
     flex: 1;
 }
 
+.form-row .form-group:last-child {
+    flex: 0 0 100px;
+    max-width: 100px;
+}
+
 .btn-submit {
     width: 100%;
     background: var(--gradient-main);

@@ -26,10 +26,8 @@ class CameraDetection {
         // Detection settings
         this.minConfidence = 0.5;
 
-        // Gender-based name pools
-        this.maleNames = ['James', 'Michael', 'David', 'Chris', 'Daniel', 'Matthew', 'Andrew', 'Josh', 'Ryan', 'Brandon'];
-        this.femaleNames = ['Emma', 'Sophia', 'Olivia', 'Ava', 'Isabella', 'Mia', 'Charlotte', 'Emily', 'Jessica', 'Ashley'];
-        this.neutralNames = ['Alex', 'Jordan', 'Sam', 'Riley', 'Taylor', 'Morgan', 'Casey', 'Quinn', 'Jamie', 'Avery'];
+        // Neutral name pool (used for all detected people)
+        this.names = ['Alex', 'Jordan', 'Sam', 'Riley', 'Taylor', 'Morgan', 'Casey', 'Quinn', 'Jamie', 'Avery', 'Charlie', 'Skyler', 'Dakota', 'Reese', 'Finley', 'Parker', 'Sage', 'River', 'Phoenix', 'Blake'];
 
         // Track used names to avoid duplicates
         this.usedNames = new Set();
@@ -206,13 +204,11 @@ class CameraDetection {
             this.detectedPeople = people.map((person, index) => {
                 const bbox = person.bbox;
                 const faceImage = this.captureFace(bbox);
-                const gender = this.estimateGender(bbox);
-                const name = this.getNameForGender(gender, index);
+                const name = this.getName(index);
 
                 return {
                     id: index,
                     name: name,
-                    gender: gender,
                     confidence: person.score,
                     bbox: bbox, // [x, y, width, height]
                     distance: this.estimateDistance(bbox[3]),
@@ -281,45 +277,10 @@ class CameraDetection {
         }
     }
 
-    // Estimate gender based on bounding box proportions
-    // This is a rough heuristic - in reality you'd use a proper ML model
-    estimateGender(bbox) {
-        const [x, y, width, height] = bbox;
-        const aspectRatio = height / width;
-
-        // Rough heuristic based on body proportions
-        // Wider shoulders relative to height might indicate male
-        // This is NOT accurate - just for demo purposes
-        const random = Math.random();
-
-        if (aspectRatio > 2.5) {
-            // Taller/thinner - could be either, use random with slight female bias
-            return random > 0.45 ? 'female' : (random > 0.2 ? 'male' : 'neutral');
-        } else if (aspectRatio < 2.0) {
-            // Wider/shorter - could be either, use random with slight male bias
-            return random > 0.45 ? 'male' : (random > 0.2 ? 'female' : 'neutral');
-        }
-
-        // Medium proportions - truly random
-        if (random > 0.66) return 'male';
-        if (random > 0.33) return 'female';
-        return 'neutral';
-    }
-
-    // Get a name based on estimated gender
-    getNameForGender(gender, index) {
-        let namePool;
-
-        if (gender === 'male') {
-            namePool = this.maleNames;
-        } else if (gender === 'female') {
-            namePool = this.femaleNames;
-        } else {
-            namePool = this.neutralNames;
-        }
-
+    // Get a unique name for a detected person
+    getName(index) {
         // Try to get an unused name
-        for (const name of namePool) {
+        for (const name of this.names) {
             if (!this.usedNames.has(name)) {
                 this.usedNames.add(name);
                 return name;
@@ -327,22 +288,15 @@ class CameraDetection {
         }
 
         // Fallback: use index-based name from pool
-        return namePool[index % namePool.length];
+        return this.names[index % this.names.length];
     }
 
     // Get all detected people with their face images
     getDetectedPeopleWithFaces() {
         return this.detectedPeople.map(person => ({
             ...person,
-            faceImage: person.faceImage || this.getDefaultAvatar(person.gender)
+            faceImage: person.faceImage || '🧑'
         }));
-    }
-
-    // Default avatar based on gender
-    getDefaultAvatar(gender) {
-        if (gender === 'male') return '👨';
-        if (gender === 'female') return '👩';
-        return '🧑';
     }
 
     drawDetections() {
@@ -558,7 +512,7 @@ class OnlyBotsDemo {
                 <div class="person-face-container">
                     ${hasFaceImage
                     ? `<img src="${person.faceImage}" alt="${person.name}" class="person-face-img">`
-                    : `<div class="person-face-img" style="display:flex;align-items:center;justify-content:center;font-size:3rem;background:var(--bg-elevated);">${this.getGenderEmoji(person.gender)}</div>`
+                    : `<div class="person-face-img" style="display:flex;align-items:center;justify-content:center;font-size:3rem;background:var(--bg-elevated);">🧑</div>`
                 }
                 </div>
                 <div class="person-picker-name">${person.name}</div>
@@ -572,19 +526,12 @@ class OnlyBotsDemo {
         this.showScreen('personPicker');
     }
 
-    getGenderEmoji(gender) {
-        if (gender === 'male') return '👨';
-        if (gender === 'female') return '👩';
-        return '🧑';
-    }
-
     selectPersonFromPicker(person) {
         this.selectedPerson = {
             id: person.id,
             name: person.name,
             type: 'Detected',
-            gender: person.gender,
-            avatar: person.faceImage || this.getGenderEmoji(person.gender),
+            avatar: person.faceImage || '🧑',
             confidence: person.confidence,
             distance: person.distance,
             faceImage: person.faceImage
@@ -595,7 +542,7 @@ class OnlyBotsDemo {
         if (person.faceImage && person.faceImage.startsWith('data:')) {
             avatarEl.innerHTML = `<img src="${person.faceImage}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">`;
         } else {
-            avatarEl.textContent = this.getGenderEmoji(person.gender);
+            avatarEl.textContent = '🧑';
         }
         document.getElementById('selectedName').textContent = person.name;
 

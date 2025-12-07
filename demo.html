@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OnlyBots Interactive Demo - Experience the absurd subscription flow">
+    <title>OnlyBots | Demo Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="demo.css">
+</head>
+
+<body>
+    <!-- Scan Lines Overlay -->
+    <div class="scanlines"></div>
+
+    <!-- App Container -->
+    <div class="app-container" id="app">
+
+        <!-- Screen 1: Detection Mode -->
+        <div class="screen active" id="screen-detection">
+            <div class="detection-header">
+                <div class="header-left">
+                    <span class="logo">🤖 OnlyBots</span>
+                    <span class="status-badge"><span class="pulse"></span> SCANNING</span>
+                </div>
+                <div class="header-right">
+                    <span class="detection-count" id="detectionCount">3 targets detected</span>
+                </div>
+            </div>
+
+            <div class="passthrough-view">
+                <div class="grid-bg"></div>
+
+                <!-- Detected People -->
+                <div class="detected-people" id="peopleContainer">
+                    <div class="person-card" data-id="1" data-name="Alex" data-type="Standing">
+                        <div class="person-avatar">👨‍💼</div>
+                        <div class="bounding-box"></div>
+                        <div class="person-label">
+                            <span class="person-name">Alex</span>
+                            <span class="person-status">Standing • 2.3m</span>
+                        </div>
+                        <div class="select-hint">TAP TO SELECT</div>
+                    </div>
+
+                    <div class="person-card" data-id="2" data-name="Jordan" data-type="Sitting">
+                        <div class="person-avatar">👩‍💻</div>
+                        <div class="bounding-box"></div>
+                        <div class="person-label">
+                            <span class="person-name">Jordan</span>
+                            <span class="person-status">Sitting • 1.8m</span>
+                        </div>
+                        <div class="select-hint">TAP TO SELECT</div>
+                    </div>
+
+                    <div class="person-card" data-id="3" data-name="Sam" data-type="Walking">
+                        <div class="person-avatar">🧑‍🎤</div>
+                        <div class="bounding-box"></div>
+                        <div class="person-label">
+                            <span class="person-name">Sam</span>
+                            <span class="person-status">Walking • 3.1m</span>
+                        </div>
+                        <div class="select-hint">TAP TO SELECT</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detection-footer">
+                <p>👆 Select a person to subscribe</p>
+            </div>
+        </div>
+
+        <!-- Screen 2: Subscribe Prompt -->
+        <div class="screen" id="screen-subscribe">
+            <div class="modal-backdrop"></div>
+            <div class="subscribe-modal">
+                <div class="modal-header">
+                    <span class="modal-icon">💫</span>
+                    <h2>New Subscriber?</h2>
+                </div>
+                <div class="selected-person-preview">
+                    <div class="preview-avatar" id="selectedAvatar">👨‍💼</div>
+                    <span class="preview-name" id="selectedName">Alex</span>
+                </div>
+                <p class="subscribe-question">Would you like to <span class="highlight">subscribe</span> to this person?
+                </p>
+                <div class="modal-buttons">
+                    <button class="btn btn-yes" id="btnYes">✓ Yes, Subscribe!</button>
+                    <button class="btn btn-no" id="btnNo">✕ No Thanks</button>
+                </div>
+                <p class="disclaimer">*Premium content awaits</p>
+            </div>
+        </div>
+
+        <!-- Screen 3: Pricing -->
+        <div class="screen" id="screen-pricing">
+            <div class="pricing-panel">
+                <div class="pricing-header">
+                    <span class="pricing-icon">💰</span>
+                    <h2>Subscription Price</h2>
+                </div>
+                <div class="price-display">
+                    <span class="currency">$</span>
+                    <span class="price-amount" id="priceAmount">4.99</span>
+                    <span class="price-period">/month</span>
+                </div>
+                <ul class="price-features">
+                    <li>✓ Unlimited access to this person</li>
+                    <li>✓ Exclusive content</li>
+                    <li>✓ Priority notifications</li>
+                    <li>✓ Dancing robot reward</li>
+                </ul>
+                <button class="btn btn-pay" id="btnProceedPay">Proceed to Pay →</button>
+                <button class="btn btn-cancel" id="btnCancelPrice">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Screen 4: Payment Form -->
+        <div class="screen" id="screen-payment">
+            <div class="payment-panel">
+                <div class="payment-header">
+                    <span class="payment-icon">💳</span>
+                    <h2>Payment Details</h2>
+                    <p class="payment-price">Total: $<span id="paymentTotal">4.99</span></p>
+                </div>
+                <form class="payment-form" id="paymentForm">
+                    <div class="form-group">
+                        <label>Card Number</label>
+                        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                        <span class="card-icons">💳</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expiry</label>
+                            <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label>CVV</label>
+                            <input type="text" id="cardCvv" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cardholder Name</label>
+                        <input type="text" id="cardName" placeholder="John Doe">
+                    </div>
+                    <button type="submit" class="btn btn-submit" id="btnSubmitPayment">
+                        <span class="btn-text">Pay Now</span>
+                        <span class="btn-loading">Processing...</span>
+                    </button>
+                </form>
+                <p class="security-note">🔒 Your payment is totally fake and secure</p>
+            </div>
+        </div>
+
+        <!-- Screen 5: Processing -->
+        <div class="screen" id="screen-processing">
+            <div class="processing-content">
+                <div class="spinner"></div>
+                <h2>Processing Payment...</h2>
+                <p>Please wait while we take your fake money</p>
+            </div>
+        </div>
+
+        <!-- Screen 6: Price Changed! -->
+        <div class="screen" id="screen-repricing">
+            <div class="repricing-panel">
+                <div class="repricing-icon">😱</div>
+                <h2 class="repricing-title">OOPS!</h2>
+                <p class="repricing-message">The price has changed!</p>
+                <div class="old-price">
+                    <span>Was: $<span id="oldPrice">4.99</span></span>
+                </div>
+                <div class="new-price-display">
+                    <span class="new-label">New Price:</span>
+                    <div class="new-amount">
+                        <span class="currency">$</span>
+                        <span id="newPrice">9.99</span>
+                    </div>
+                </div>
+                <p class="loop-counter">Payment attempt <span id="attemptCount">2</span> of <span
+                        id="totalAttempts">4</span></p>
+                <button class="btn btn-repay" id="btnPayAgain">😤 Pay Again</button>
+                <button class="btn btn-rage-quit" id="btnRageQuit">🚪 Rage Quit</button>
+            </div>
+        </div>
+
+        <!-- Screen 7: Success! Dancing Robot -->
+        <div class="screen" id="screen-success">
+            <div class="confetti-container" id="confettiContainer"></div>
+            <div class="success-content">
+                <div class="robot-stage">
+                    <div class="dancing-robot" id="dancingRobot">
+                        <div class="robot-head">
+                            <div class="robot-eyes">
+                                <span class="eye left"></span>
+                                <span class="eye right"></span>
+                            </div>
+                            <div class="robot-mouth"></div>
+                        </div>
+                        <div class="robot-body">
+                            <div class="robot-arm left"></div>
+                            <div class="robot-arm right"></div>
+                            <div class="robot-chest">
+                                <div class="heart">❤️</div>
+                            </div>
+                        </div>
+                        <div class="robot-legs">
+                            <div class="robot-leg left"></div>
+                            <div class="robot-leg right"></div>
+                        </div>
+                    </div>
+                </div>
+                <h1 class="success-title">🎉 SUBSCRIPTION COMPLETE! 🎉</h1>
+                <p class="success-message">You paid <span id="totalPaid">$74.96</span> for absolutely nothing.
+                    Congratulations!</p>
+                <div class="success-stats">
+                    <div class="stat">
+                        <span class="stat-value" id="statPayments">4</span>
+                        <span class="stat-label">Payments Made</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="statTime">45s</span>
+                        <span class="stat-label">Time Wasted</span>
+                    </div>
+                </div>
+                <button class="btn btn-restart" id="btnRestart">🔄 Subscribe to Someone Else</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="demo.js"></script>
+</body>
+
+</html>

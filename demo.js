@@ -19,9 +19,20 @@ class CameraDetection {
         this.onPersonDetected = onPersonDetected;
         this.onPersonLost = onPersonLost;
 
+        // Face capture canvas (offscreen)
+        this.faceCanvas = document.createElement('canvas');
+        this.faceCtx = this.faceCanvas.getContext('2d');
+
         // Detection settings
         this.minConfidence = 0.5;
-        this.personNames = ['Alex', 'Jordan', 'Sam', 'Riley', 'Taylor', 'Morgan', 'Casey', 'Quinn'];
+
+        // Gender-based name pools
+        this.maleNames = ['James', 'Michael', 'David', 'Chris', 'Daniel', 'Matthew', 'Andrew', 'Josh', 'Ryan', 'Brandon'];
+        this.femaleNames = ['Emma', 'Sophia', 'Olivia', 'Ava', 'Isabella', 'Mia', 'Charlotte', 'Emily', 'Jessica', 'Ashley'];
+        this.neutralNames = ['Alex', 'Jordan', 'Sam', 'Riley', 'Taylor', 'Morgan', 'Casey', 'Quinn', 'Jamie', 'Avery'];
+
+        // Track used names to avoid duplicates
+        this.usedNames = new Set();
     }
 
     async init() {
@@ -191,14 +202,23 @@ class CameraDetection {
             // Track previous count
             const prevCount = this.detectedPeople.length;
 
-            // Update detected people
-            this.detectedPeople = people.map((person, index) => ({
-                id: index,
-                name: this.personNames[index % this.personNames.length],
-                confidence: person.score,
-                bbox: person.bbox, // [x, y, width, height]
-                distance: this.estimateDistance(person.bbox[3])
-            }));
+            // Update detected people with face captures
+            this.detectedPeople = people.map((person, index) => {
+                const bbox = person.bbox;
+                const faceImage = this.captureFace(bbox);
+                const gender = this.estimateGender(bbox);
+                const name = this.getNameForGender(gender, index);
+
+                return {
+                    id: index,
+                    name: name,
+                    gender: gender,
+                    confidence: person.score,
+                    bbox: bbox, // [x, y, width, height]
+                    distance: this.estimateDistance(bbox[3]),
+                    faceImage: faceImage
+                };
+            });
 
             // Draw bounding boxes
             this.drawDetections();
@@ -229,6 +249,100 @@ class CameraDetection {
 
         // Continue loop
         requestAnimationFrame(() => this.detectLoop());
+    }
+
+    // Capture face/upper body from bounding box
+    captureFace(bbox) {
+        try {
+            const [x, y, width, height] = bbox;
+
+            // Focus on upper portion (head/face area)
+            const faceY = y;
+            const faceHeight = Math.min(height * 0.5, width * 1.2); // Upper half, roughly square
+            const faceWidth = width;
+
+            // Set up capture canvas
+            const captureSize = 150;
+            this.faceCanvas.width = captureSize;
+            this.faceCanvas.height = captureSize;
+
+            // Draw the face region to canvas
+            this.faceCtx.drawImage(
+                this.video,
+                x, faceY, faceWidth, faceHeight,  // Source rectangle
+                0, 0, captureSize, captureSize     // Destination (scaled to square)
+            );
+
+            // Return as data URL
+            return this.faceCanvas.toDataURL('image/jpeg', 0.8);
+        } catch (e) {
+            console.warn('Face capture failed:', e);
+            return null;
+        }
+    }
+
+    // Estimate gender based on bounding box proportions
+    // This is a rough heuristic - in reality you'd use a proper ML model
+    estimateGender(bbox) {
+        const [x, y, width, height] = bbox;
+        const aspectRatio = height / width;
+
+        // Rough heuristic based on body proportions
+        // Wider shoulders relative to height might indicate male
+        // This is NOT accurate - just for demo purposes
+        const random = Math.random();
+
+        if (aspectRatio > 2.5) {
+            // Taller/thinner - could be either, use random with slight female bias
+            return random > 0.45 ? 'female' : (random > 0.2 ? 'male' : 'neutral');
+        } else if (aspectRatio < 2.0) {
+            // Wider/shorter - could be either, use random with slight male bias
+            return random > 0.45 ? 'male' : (random > 0.2 ? 'female' : 'neutral');
+        }
+
+        // Medium proportions - truly random
+        if (random > 0.66) return 'male';
+        if (random > 0.33) return 'female';
+        return 'neutral';
+    }
+
+    // Get a name based on estimated gender
+    getNameForGender(gender, index) {
+        let namePool;
+
+        if (gender === 'male') {
+            namePool = this.maleNames;
+        } else if (gender === 'female') {
+            namePool = this.femaleNames;
+        } else {
+            namePool = this.neutralNames;
+        }
+
+        // Try to get an unused name
+        for (const name of namePool) {
+            if (!this.usedNames.has(name)) {
+                this.usedNames.add(name);
+                return name;
+            }
+        }
+
+        // Fallback: use index-based name from pool
+        return namePool[index % namePool.length];
+    }
+
+    // Get all detected people with their face images
+    getDetectedPeopleWithFaces() {
+        return this.detectedPeople.map(person => ({
+            ...person,
+            faceImage: person.faceImage || this.getDefaultAvatar(person.gender)
+        }));
+    }
+
+    // Default avatar based on gender
+    getDefaultAvatar(gender) {
+        if (gender === 'male') return '👨';
+        if (gender === 'female') return '👩';
+        return '🧑';
     }
 
     drawDetections() {
@@ -342,6 +456,7 @@ class OnlyBotsDemo {
         // Elements
         this.screens = {
             camera: document.getElementById('screen-camera'),
+            personPicker: document.getElementById('screen-person-picker'),
             detection: document.getElementById('screen-detection'),
             subscribe: document.getElementById('screen-subscribe'),
             pricing: document.getElementById('screen-pricing'),
@@ -369,8 +484,11 @@ class OnlyBotsDemo {
 
     bindEvents() {
         // Camera screen buttons
-        document.getElementById('btnSelectPerson').addEventListener('click', () => this.selectFromCamera());
+        document.getElementById('btnSelectPerson').addEventListener('click', () => this.showPersonPicker());
         document.getElementById('btnSkipCamera').addEventListener('click', () => this.skipToDemo());
+
+        // Person picker - back button
+        document.getElementById('btnBackToCamera').addEventListener('click', () => this.showScreen('camera'));
 
         // Person selection (fallback demo mode)
         document.querySelectorAll('.person-card').forEach(card => {
@@ -415,25 +533,74 @@ class OnlyBotsDemo {
         }, 100);
     }
 
-    selectFromCamera() {
-        const person = this.cameraDetection.getSelectedPerson();
-        if (person) {
-            this.selectedPerson = {
-                id: person.id,
-                name: person.name,
-                type: 'Detected',
-                avatar: '👤',
-                confidence: person.confidence,
-                distance: person.distance
-            };
+    showPersonPicker() {
+        // Get all detected people with their faces
+        const people = this.cameraDetection.getDetectedPeopleWithFaces();
 
-            // Update subscribe modal
-            document.getElementById('selectedAvatar').textContent = '👤';
-            document.getElementById('selectedName').textContent = person.name;
-
-            this.showScreen('subscribe');
-            this.startTime = Date.now();
+        if (people.length === 0) {
+            console.warn('No people detected');
+            return;
         }
+
+        // Render the person picker grid
+        const grid = document.getElementById('personPickerGrid');
+        grid.innerHTML = '';
+
+        people.forEach((person, index) => {
+            const card = document.createElement('div');
+            card.className = 'person-picker-card';
+            card.onclick = () => this.selectPersonFromPicker(person);
+
+            // Determine if we have a face image or need a fallback
+            const hasFaceImage = person.faceImage && person.faceImage.startsWith('data:');
+
+            card.innerHTML = `
+                <div class="person-face-container">
+                    ${hasFaceImage
+                    ? `<img src="${person.faceImage}" alt="${person.name}" class="person-face-img">`
+                    : `<div class="person-face-img" style="display:flex;align-items:center;justify-content:center;font-size:3rem;background:var(--bg-elevated);">${this.getGenderEmoji(person.gender)}</div>`
+                }
+                </div>
+                <div class="person-picker-name">${person.name}</div>
+                <div class="person-picker-info">${person.distance}m away • ${Math.round(person.confidence * 100)}% match</div>
+                <div class="person-picker-badge">TAP TO SUBSCRIBE</div>
+            `;
+
+            grid.appendChild(card);
+        });
+
+        this.showScreen('personPicker');
+    }
+
+    getGenderEmoji(gender) {
+        if (gender === 'male') return '👨';
+        if (gender === 'female') return '👩';
+        return '🧑';
+    }
+
+    selectPersonFromPicker(person) {
+        this.selectedPerson = {
+            id: person.id,
+            name: person.name,
+            type: 'Detected',
+            gender: person.gender,
+            avatar: person.faceImage || this.getGenderEmoji(person.gender),
+            confidence: person.confidence,
+            distance: person.distance,
+            faceImage: person.faceImage
+        };
+
+        // Update subscribe modal with face image or emoji
+        const avatarEl = document.getElementById('selectedAvatar');
+        if (person.faceImage && person.faceImage.startsWith('data:')) {
+            avatarEl.innerHTML = `<img src="${person.faceImage}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">`;
+        } else {
+            avatarEl.textContent = this.getGenderEmoji(person.gender);
+        }
+        document.getElementById('selectedName').textContent = person.name;
+
+        this.showScreen('subscribe');
+        this.startTime = Date.now();
     }
 
     skipToDemo() {

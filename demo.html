@@ -54,6 +54,27 @@
             </div>
         </div>
 
+        <!-- Screen 0.5: Person Picker (Choose from detected people) -->
+        <div class="screen" id="screen-person-picker">
+            <div class="detection-header">
+                <div class="header-left">
+                    <span class="logo">🤖 OnlyBots</span>
+                    <span class="status-badge"><span class="pulse"></span> SELECT TARGET</span>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-secondary btn-small" id="btnBackToCamera">← Back to Camera</button>
+                </div>
+            </div>
+
+            <div class="picker-container">
+                <h2 class="picker-title">Who do you want to <span class="gradient-text">subscribe</span> to?</h2>
+                <p class="picker-subtitle">Select a person from the detected targets</p>
+                <div class="person-picker-grid" id="personPickerGrid">
+                    <!-- Dynamically populated with detected people -->
+                </div>
+            </div>
+        </div>
+
         <!-- Screen 1: Detection Mode (Fallback/Demo) -->
         <div class="screen" id="screen-detection">
             <div class="detection-header">

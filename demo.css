@@ -403,6 +403,118 @@ body {
     margin-bottom: 1.5rem;
 }
 
+/* Person Picker Screen */
+#screen-person-picker {
+    background: var(--bg-primary);
+}
+
+.picker-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.picker-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.picker-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.person-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 800px;
+}
+
+.person-picker-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.person-picker-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: var(--accent-cyan);
+    box-shadow: var(--shadow-glow);
+}
+
+.person-picker-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-main);
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.person-picker-card:hover::before {
+    opacity: 1;
+}
+
+.person-face-container {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--accent-cyan);
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+}
+
+.person-face-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.person-picker-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.person-picker-info {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.person-picker-badge {
+    display: inline-block;
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--accent-cyan);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
 /* Subscribe Modal Screen */
 #screen-subscribe {
     justify-content: center;
